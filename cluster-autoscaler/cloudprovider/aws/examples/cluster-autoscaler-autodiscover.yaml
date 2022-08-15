@@ -124,6 +124,8 @@ metadata:
   namespace: kube-system
   labels:
     app: cluster-autoscaler
+  annotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
 spec:
   replicas: 1
   selector:
@@ -144,15 +146,15 @@ spec:
         fsGroup: 65534
       serviceAccountName: cluster-autoscaler
       containers:
-        - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.22.2
+        - image: abelliu/cluster-autoscaler:v1.22.2
           name: cluster-autoscaler
           resources:
             limits:
               cpu: 100m
-              memory: 600Mi
+              memory: 300Mi
             requests:
               cpu: 100m
-              memory: 600Mi
+              memory: 300Mi
           command:
             - ./cluster-autoscaler
             - --v=4
@@ -161,6 +163,9 @@ spec:
             - --skip-nodes-with-local-storage=false
             - --expander=least-waste
             - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/<YOUR CLUSTER NAME>
+            - --aws-use-static-instance-list=true
+            - --balance-similar-node-groups
+            - --skip-nodes-with-system-pods=false
           volumeMounts:
             - name: ssl-certs
               mountPath: /etc/ssl/certs/ca-certificates.crt #/etc/ssl/certs/ca-bundle.crt for Amazon Linux Worker Nodes
